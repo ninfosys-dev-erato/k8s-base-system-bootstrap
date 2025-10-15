@@ -13,6 +13,7 @@ End-to-end reproducible Kubernetes bootstrap for bare-metal or VM nodes.
 - External LB (nginx)
 
 ## Directory layout
+```
 /etc/system-bootstrap
 ├── base-config.yaml
 ├── container-runtime.yaml
@@ -21,6 +22,7 @@ End-to-end reproducible Kubernetes bootstrap for bare-metal or VM nodes.
 ├── traefik/values.yaml
 ├── whoami/whoami.yaml
 └── docs/
+```
 
 ## Workflow
 1. Host setup  
