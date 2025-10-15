@@ -1,0 +1,13 @@
+system:
+  user: admin
+  ssh:
+    port: 2222
+    root_login: false
+    password_auth: false
+  packages:
+    - ca-certificates
+    - curl
+    - gnupg
+    - lsb-release
+    - jq
+  auto_update: true

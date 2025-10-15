@@ -1,0 +1,8 @@
+runtime:
+  name: containerd
+  version: auto
+  cgroup_driver: systemd
+  config_file: /etc/containerd/config.toml
+  services:
+    - containerd
+  enabled: true

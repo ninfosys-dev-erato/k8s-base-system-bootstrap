@@ -1,0 +1,112 @@
+# /etc/system-bootstrap/traefik/values.yaml
+# ---------------------------------------------------------------------
+# Networking (high ports to avoid privileged bindings)
+# ---------------------------------------------------------------------
+ports:
+  web:
+    port: 8880
+    expose:
+      default: true
+    nodePort: 30880
+  websecure:
+    port: 8443
+    expose:
+      default: true
+    nodePort: 30443
+    tls:
+      enabled: true
+
+# ---------------------------------------------------------------------
+# Service Exposure (NodePort for external Nginx LB access)
+# ---------------------------------------------------------------------
+service:
+  enabled: true
+  type: NodePort
+
+# ---------------------------------------------------------------------
+# Persistence (for ACME storage)
+# ---------------------------------------------------------------------
+persistence:
+  enabled: true
+  name: data
+  path: /data
+  size: 1Gi
+  accessMode: ReadWriteOnce
+  storageClass: local-path
+  existingClaim: ""
+  # Ensures the PVC mounts under /data for certificate storage
+
+# ---------------------------------------------------------------------
+# ACME / Let's Encrypt (staging)
+# ---------------------------------------------------------------------
+certificatesResolvers:
+  le:
+    acme:
+      email: ops@digitalepalika.com
+      storage: /data/acme.json
+      httpChallenge:
+        entryPoint: web
+      caServer: https://acme-v02.api.letsencrypt.org/directory
+
+# ---------------------------------------------------------------------
+# IngressClass
+# ---------------------------------------------------------------------
+ingressClass:
+  enabled: true
+  isDefaultClass: true
+  name: traefik
+
+# ---------------------------------------------------------------------
+# Deployment security and runtime (non-root, restricted policy)
+# ---------------------------------------------------------------------
+deployment:
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 65532
+    runAsGroup: 65532
+  securityContext:
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+
+# ---------------------------------------------------------------------
+# Init container to fix permissions on ACME storage
+# ---------------------------------------------------------------------
+initContainers:
+  - name: volume-permissions
+    image: busybox
+    command:
+      - sh
+      - -c
+      - >
+        chmod 600 /data || true;
+        chown 65532:65532 /data || true;
+    volumeMounts:
+      - name: data
+        mountPath: /data
+
+# ---------------------------------------------------------------------
+# Metrics and dashboard
+# ---------------------------------------------------------------------
+additionalArguments:
+  - "--api.dashboard=true"
+  - "--api.insecure=false"
+  - "--entryPoints.dashboard.address=:9000/tcp"
+  - "--metrics.prometheus=true"
+  - "--metrics.prometheus.entrypoint=metrics"
+  - "--entryPoints.metrics.address=:9100/tcp"
+  - "--log.level=DEBUG"
+  - "--providers.kubernetesIngress.allowExternalNameServices=true"
+  - "--providers.kubernetesIngress.allowEmptyServices=true"
+  - "--providers.kubernetesIngress.ingressEndpoint.publishedService=traefik/traefik"
+
+# ---------------------------------------------------------------------
+# Resource requests and limits
+# ---------------------------------------------------------------------
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
